@@ -65,6 +65,7 @@ const addSchool = async (req, res) => {
 const getSchools = async (req, res) => {
   const { latitude, longitude } = req.query;
 
+  // Validate latitude and longitude
   if (isNaN(latitude) || isNaN(longitude)) {
     return res
       .status(400)
@@ -84,8 +85,10 @@ const getSchools = async (req, res) => {
   }
 
   try {
+
     const schools = await School.findAll();
 
+    
     const sortedSchools = schools
       .map((school) => {
         const distanceInMeters = geolib.getDistance(
@@ -95,17 +98,25 @@ const getSchools = async (req, res) => {
 
         const distanceInKm = distanceInMeters / 1000;
 
+       
         return {
           ...school.toJSON(),
-          distance: distanceInKm.toFixed(2) + " km",
+          distanceInKm, 
         };
       })
-      .sort((a, b) => a.distance - b.distance);
+      .sort((a, b) => a.distanceInKm - b.distanceInKm) 
+      .map((school) => ({
+        ...school,
+        distance: school.distanceInKm.toFixed(2) + " km", 
+      }));
 
+    
     res.status(200).json({ schools: sortedSchools });
   } catch (error) {
+   
     res.status(500).json({ message: error.message });
   }
 };
+
 
 module.exports = { addSchool, getSchools };
